@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend API for cocos challenge",
   "main": "dist/server.js",
+  "packageManager": "yarn@1.22.19",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
