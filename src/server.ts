@@ -7,6 +7,7 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import { AppDataSource } from './config/database';
+import instrumentRoutes from './routes/instrumentRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
+
+// API Routes
+app.use('/instruments', instrumentRoutes);
 
 // Initialize database connection
 AppDataSource.initialize()

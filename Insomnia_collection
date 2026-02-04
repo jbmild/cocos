@@ -1,0 +1,194 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: Cocos
+meta:
+  id: wrk_60035b46885a4280beb9183b06de0aa8
+  created: 1770248341966
+  modified: 1770248341966
+  description: ""
+collection:
+  - url: "{{URL}}/health"
+    name: Health status
+    meta:
+      id: req_77d98c2149f145ac9be1e29ba95bd0a3
+      created: 1770248392107
+      modified: 1770248431996
+      isPrivate: false
+      description: ""
+      sortKey: -1770248392107
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.3.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - name: Instruments
+    meta:
+      id: fld_48df268f78c144c696022d99be02ecc8
+      created: 1770248462331
+      modified: 1770248466082
+      sortKey: -1770248392007
+      description: ""
+    children:
+      - url: "{{URL}}/instruments/search"
+        name: Search all (50 records per page)
+        meta:
+          id: req_f1b69955c96148d881d5253c5c3c7a85
+          created: 1770248533652
+          modified: 1770248664166
+          isPrivate: false
+          description: ""
+          sortKey: -1770248533652
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/instruments/search"
+        name: Search all (1000 records per page)
+        meta:
+          id: req_fa37368082a04de688f205d3177b18fd
+          created: 1770248694224
+          modified: 1770248698673
+          isPrivate: false
+          description: ""
+          sortKey: -1770248462879.5
+        method: GET
+        parameters:
+          - name: limit
+            value: "1000"
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/instruments/search"
+        name: Search all (10 records per page, second page)
+        meta:
+          id: req_49403f099393401fa8b2aabc5b9a472c
+          created: 1770248733645
+          modified: 1770248742639
+          isPrivate: false
+          description: ""
+          sortKey: -1770248427493.25
+        method: GET
+        parameters:
+          - name: limit
+            value: "10"
+            description: ""
+            disabled: false
+          - name: off
+            value: "10"
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/instruments/search"
+        name: Search Compania introductora de buenos aires S.A.
+        meta:
+          id: req_bbf73b43469948728255c47847e35990
+          created: 1770248791972
+          modified: 1770248825925
+          isPrivate: false
+          description: ""
+          sortKey: -1770248409800.125
+        method: GET
+        parameters:
+          - name: q
+            value: Companía Introductora de Buenos Aires S.A.
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/instruments/search"
+        name: Search Compañia introductora de buenos aires S.A.
+        meta:
+          id: req_e22fcbb22eba45e49487a57cd086a627
+          created: 1770248839222
+          modified: 1770248841927
+          isPrivate: false
+          description: ""
+          sortKey: -1770248400953.5625
+        method: GET
+        parameters:
+          - name: q
+            value: Compañía Introductora de Buenos Aires S.A.
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_f45f733d04e82e51d5bbbe63023540bcaea58b23
+    created: 1770248341968
+    modified: 1770248341968
+environments:
+  name: Base Environment
+  meta:
+    id: env_f45f733d04e82e51d5bbbe63023540bcaea58b23
+    created: 1770248341967
+    modified: 1770248379308
+    isPrivate: false
+  data:
+    URL: http://localhost:3000

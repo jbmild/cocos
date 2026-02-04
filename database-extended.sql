@@ -7,3 +7,5 @@ INSERT INTO "orders" (instrumentId, userId, size, price, side, status, type, dat
   (47, 1, 10, 925.85, 'SELL', 'FILLED', 'MARKET', '2025-09-08 19:27:12.23743'),
   (47, 1, 10, 925.85, 'SELL', 'FILLED', 'MARKET', '2025-09-08 21:20:12.376166'),
   (47, 1, 10, 925.85, 'BUY', 'FILLED', 'MARKET', '2025-09-08 21:20:18.529866');
+
+CREATE EXTENSION IF NOT EXISTS unaccent;

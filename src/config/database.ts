@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Instrument } from '../entities/Instrument';
 
 // Leer configuración SSL desde variables de entorno
 const sslEnabled = process.env.DB_SSL === 'true';
@@ -10,7 +11,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'cocos',
-  entities: [],
+  entities: [Instrument],
   synchronize: false, // No usar en producción, ya tenemos el schema
   logging: process.env.NODE_ENV === 'development',
   ssl: sslEnabled ? {
