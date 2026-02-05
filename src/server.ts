@@ -8,6 +8,7 @@ import express from 'express';
 import cors from 'cors';
 import { AppDataSource } from './config/database';
 import instrumentRoutes from './routes/instrumentRoutes';
+import portfolioRoutes from './routes/portfolioRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/instruments', instrumentRoutes);
+app.use('/portfolio', portfolioRoutes);
 
 // Initialize database connection
 AppDataSource.initialize()

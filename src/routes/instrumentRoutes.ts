@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { InstrumentController } from '../controllers/InstrumentController';
+import { validate } from '../middleware/validation';
+import { searchInstrumentsSchema } from '../validators/instrumentValidators';
 
 const router = Router();
 const instrumentController = new InstrumentController();
@@ -10,6 +12,6 @@ const instrumentController = new InstrumentController();
  *  limit:  opcional - default: 50
  *  offset: registros a saltar (opcional - default: 0)
  */
-router.get('/search', instrumentController.search);
+router.get('/search', validate(searchInstrumentsSchema, 'query'), instrumentController.search);
 
 export default router;

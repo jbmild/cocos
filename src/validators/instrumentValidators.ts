@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-/**
- * Schema de validación para la búsqueda de instrumentos
- */
 export const searchInstrumentsSchema = z.object({
   q: z.string().optional(),
   limit: z.coerce

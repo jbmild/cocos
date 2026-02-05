@@ -1,6 +1,6 @@
 export enum InstrumentType {
   ACCIONES = 'ACCIONES',
-  PESOS = 'PESOS',
+  MONEDA = 'MONEDA',
   // BONOS = 'BONOS',
   // OPCIONES = 'OPCIONES',
   // FUTUROS = 'FUTUROS',

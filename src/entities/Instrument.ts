@@ -8,13 +8,14 @@ export class Instrument {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 10, nullable: true })
+  @Column({ name: 'ticker', type: 'varchar', length: 10, nullable: true })
   ticker: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ name: 'name', type: 'varchar', length: 255, nullable: true })
   name: string;
 
   @Column({
+    name: 'type',
     type: 'varchar',
     length: 10,
     nullable: true,

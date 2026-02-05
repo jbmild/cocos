@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { InstrumentService } from '../services/InstrumentService';
-import { searchInstrumentsSchema } from '../validators/instrumentValidators';
-import { ZodIssue } from 'zod';
+import { SearchInstrumentsQuery } from '../validators/instrumentValidators';
 
 export class InstrumentController {
   private instrumentService: InstrumentService;
@@ -15,22 +14,7 @@ export class InstrumentController {
    */
   search = async (req: Request, res: Response): Promise<void> => {
     try {
-      // Validar query parameters con Zod
-      const validationResult = searchInstrumentsSchema.safeParse(req.query);
-
-      if (!validationResult.success) {
-        res.status(400).json({
-          error: 'Validation error',
-          message: 'Invalid query parameters',
-          details: validationResult.error.issues.map((err: ZodIssue) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-        return;
-      }
-
-      const { q: query, limit, offset } = validationResult.data;
+      const { q: query, limit, offset } = (req as any).validated as SearchInstrumentsQuery;
 
       // Obtener instrumentos y total
       const [instruments, total] = await Promise.all([
