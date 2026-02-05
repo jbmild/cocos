@@ -34,8 +34,8 @@ collection:
     meta:
       id: fld_48df268f78c144c696022d99be02ecc8
       created: 1770248462331
-      modified: 1770248466082
-      sortKey: -1770248392007
+      modified: 1770261291793
+      sortKey: -1770248392082
       description: ""
     children:
       - url: "{{URL}}/instruments/search"
@@ -177,60 +177,139 @@ collection:
             send: true
             store: true
           rebuildPath: true
-      - name: Portfolio
+      - url: "{{URL}}/instruments/search"
+        name: Search all invalid limit
         meta:
-          id: fld_03a89d565d924a93a2d78af66b65a012
-          created: 1770256097857
-          modified: 1770256103745
-          sortKey: -1770248400853.5625
+          id: req_c7e46dbbf37844f8b7ca4e2a943e4587
+          created: 1770261326569
+          modified: 1770261329855
+          isPrivate: false
           description: ""
-        children:
-          - url: "{{URL}}/portfolio/asd"
-            name: Invalid User Id
-            meta:
-              id: req_028353806fdf4c87bf02d6f0513b570b
-              created: 1770256107348
-              modified: 1770256171710
-              isPrivate: false
-              description: ""
-              sortKey: -1770256107348
-            method: GET
-            headers:
-              - name: User-Agent
-                value: insomnia/12.3.0
-                description: ""
-                disabled: false
-            settings:
-              renderRequestBody: true
-              encodeUrl: true
-              followRedirects: global
-              cookies:
-                send: true
-                store: true
-              rebuildPath: true
-          - url: "{{URL}}/portfolio/1"
-            name: Valid user
-            meta:
-              id: req_8e3e8c66674e4773a4ba81d8c54cd888
-              created: 1770256193638
-              modified: 1770256197156
-              isPrivate: false
-              description: ""
-              sortKey: -1770252320500
-            method: GET
-            headers:
-              - name: User-Agent
-                value: insomnia/12.3.0
-                description: ""
-                disabled: false
-            settings:
-              renderRequestBody: true
-              encodeUrl: true
-              followRedirects: global
-              cookies:
-                send: true
-                store: true
-              rebuildPath: true
+          sortKey: -1770248445186.375
+        method: GET
+        parameters:
+          - name: limit
+            value: asd
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/instruments/search"
+        name: Search all invalid offset
+        meta:
+          id: req_0aa0580470e349d18650c8db8cca18b0
+          created: 1770261340589
+          modified: 1770261359950
+          isPrivate: false
+          description: ""
+          sortKey: -1770248436339.8125
+        method: GET
+        parameters:
+          - name: offset
+            value: asd
+            description: ""
+            disabled: false
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Portfolio
+    meta:
+      id: fld_03a89d565d924a93a2d78af66b65a012
+      created: 1770256097857
+      modified: 1770261289439
+      sortKey: -1770248392057
+      description: ""
+    children:
+      - url: "{{URL}}/portfolio/asd"
+        name: Invalid User Id
+        meta:
+          id: req_028353806fdf4c87bf02d6f0513b570b
+          created: 1770256107348
+          modified: 1770256171710
+          isPrivate: false
+          description: ""
+          sortKey: -1770256107348
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/portfolio/1"
+        name: Valid user - invalid portfolio state
+        meta:
+          id: req_8e3e8c66674e4773a4ba81d8c54cd888
+          created: 1770256193638
+          modified: 1770261228099
+          isPrivate: false
+          description: ""
+          sortKey: -1770252320500
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/portfolio/2"
+        name: Valid user - valid portfolio state
+        meta:
+          id: req_e6511821ad494db6a93167b79b5c73ad
+          created: 1770261237506
+          modified: 1770261243428
+          isPrivate: false
+          description: ""
+          sortKey: -1770250427076
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
 cookieJar:
   name: Default Jar
   meta:

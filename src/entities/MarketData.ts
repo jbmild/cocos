@@ -6,7 +6,7 @@ export class MarketData {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'instrumentId', type: 'int', nullable: true })
+  @Column({ name: 'instrumentid', type: 'int', nullable: true })
   instrumentId: number;
 
   @Column({ name: 'high', type: 'decimal', precision: 10, scale: 2, nullable: true })
@@ -28,6 +28,6 @@ export class MarketData {
   date: Date;
 
   @ManyToOne(() => Instrument)
-  @JoinColumn({ name: 'instrumentId' })
+  @JoinColumn({ name: 'instrumentid' })
   instrument: Instrument;
 }

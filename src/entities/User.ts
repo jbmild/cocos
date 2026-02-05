@@ -9,7 +9,7 @@ export class User {
   @Column({ name: 'email', type: 'varchar', length: 255, nullable: true })
   email: string;
 
-  @Column({ name: 'accountNumber', type: 'varchar', length: 20, nullable: true })
+  @Column({ name: 'accountnumber', type: 'varchar', length: 20, nullable: true })
   accountNumber: string;
 
   @OneToMany(() => Order, (order) => order.user)

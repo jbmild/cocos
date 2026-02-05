@@ -16,10 +16,10 @@ export class Order {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'instrumentId', type: 'int', nullable: true })
+  @Column({ name: 'instrumentid', type: 'int', nullable: true })
   instrumentId: number;
 
-  @Column({ name: 'userId', type: 'int', nullable: true })
+  @Column({ name: 'userid', type: 'int', nullable: true })
   userId: number;
 
   @Column({ name: 'size', type: 'int', nullable: true })
@@ -41,10 +41,10 @@ export class Order {
   datetime: Date;
 
   @ManyToOne(() => Instrument)
-  @JoinColumn({ name: 'instrumentId' })
+  @JoinColumn({ name: 'instrumentid' })
   instrument: Instrument;
 
   @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userid' })
   user: User;
 }

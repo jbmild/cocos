@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
 
 /**
- * Middleware genérico de validación con Zod
- * @param schema - Schema de Zod para validar
- * @param source - Fuente de datos a validar: 'body', 'query', 'params' (default: 'body')
+ * Middleware validacion con Zod
+ *  schema
+ *  source - fuente de datos ('body', 'query', 'params' - default: 'body')
  */
 export const validate = (schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') => {
   return (req: Request, res: Response, next: NextFunction) => {
