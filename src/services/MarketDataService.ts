@@ -1,6 +1,6 @@
 import { AppDataSource } from '../config/database';
 import { MarketData } from '../entities/MarketData';
-import { Repository } from 'typeorm';
+import { Repository, QueryRunner } from 'typeorm';
 import { NotFoundError } from '../errors/NotFoundError';
 
 export class MarketDataService {
@@ -13,9 +13,12 @@ export class MarketDataService {
   /**
    * Obtiene el precio de mercado mas reciente para un instrumento. Throws error si el precio de mercado no esta disponible
    *  instrumentId: ID del instrumento
+   *  queryRunner: QueryRunner opcional para usar dentro de una transaccion
    */
-  async getMarketPrice(instrumentId: number): Promise<number> {
-    const latestMarketData = await this.marketDataRepository.findOne({
+  async getMarketPrice(instrumentId: number, queryRunner?: QueryRunner): Promise<number> {
+    const manager = queryRunner?.manager || this.marketDataRepository.manager;
+    
+    const latestMarketData = await manager.findOne(MarketData, {
       where: { instrumentId },
       order: { date: 'DESC' },
     });

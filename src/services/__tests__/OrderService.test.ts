@@ -6,12 +6,13 @@ import { OrderStatus } from '../../enums/OrderStatus';
 import { OrderSide } from '../../enums/OrderSide';
 import { OrderType } from '../../enums/OrderType';
 import { InstrumentType } from '../../enums/InstrumentType';
-import { Repository } from 'typeorm';
+import { Repository, QueryRunner } from 'typeorm';
 import { PortfolioService } from '../PortfolioService';
 import { InstrumentService } from '../InstrumentService';
 import { MarketDataService } from '../MarketDataService';
 import { OrderBuilderFactory } from '../order-builders/OrderBuilderFactory';
 import { OrderProcessorFactory } from '../order-processors/OrderProcessorFactory';
+import { LockService } from '../LockService';
 import { ValidationError } from '../../errors/ValidationError';
 import { NotFoundError } from '../../errors/NotFoundError';
 
@@ -21,6 +22,7 @@ jest.mock('../InstrumentService');
 jest.mock('../MarketDataService');
 jest.mock('../order-builders/OrderBuilderFactory');
 jest.mock('../order-processors/OrderProcessorFactory');
+jest.mock('../LockService');
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -30,6 +32,7 @@ describe('OrderService', () => {
   let mockMarketDataService: jest.Mocked<MarketDataService>;
   let mockBuilder: any;
   let mockProcessor: any;
+  let mockQueryRunner: jest.Mocked<QueryRunner>;
 
   beforeEach(() => {
     mockOrderRepository = {
@@ -58,12 +61,28 @@ describe('OrderService', () => {
       determineStatus: jest.fn(),
     };
 
+    const mockManagerSave = jest.fn();
+    const mockManager = {
+      save: mockManagerSave,
+    };
+
+    mockQueryRunner = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      startTransaction: jest.fn().mockResolvedValue(undefined),
+      commitTransaction: jest.fn().mockResolvedValue(undefined),
+      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+      manager: mockManager as any,
+    } as any;
+
     (AppDataSource.getRepository as jest.Mock) = jest.fn(() => mockOrderRepository);
+    (AppDataSource.createQueryRunner as jest.Mock) = jest.fn(() => mockQueryRunner);
     (PortfolioService as jest.MockedClass<typeof PortfolioService>).mockImplementation(() => mockPortfolioService);
     (InstrumentService as jest.MockedClass<typeof InstrumentService>).mockImplementation(() => mockInstrumentService);
     (MarketDataService as jest.MockedClass<typeof MarketDataService>).mockImplementation(() => mockMarketDataService);
     (OrderBuilderFactory.create as jest.Mock) = jest.fn(() => mockBuilder);
     (OrderProcessorFactory.create as jest.Mock) = jest.fn(() => mockProcessor);
+    (LockService.acquireUserLock as jest.Mock) = jest.fn().mockResolvedValue(undefined);
 
     service = new OrderService();
   });
@@ -120,18 +139,21 @@ describe('OrderService', () => {
       mockBuilder.buildOrder.mockReturnValue({ order: mockOrder, marketPrice: 925.85 });
       mockProcessor.validateOrder.mockReturnValue(true);
       mockProcessor.determineStatus.mockReturnValue(OrderStatus.FILLED);
-      mockOrderRepository.save.mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
 
       const result = await service.createOrder(input);
 
-      expect(mockInstrumentService.getInstrument).toHaveBeenCalledWith(47);
-      expect(mockMarketDataService.getMarketPrice).toHaveBeenCalledWith(47);
+      expect(mockQueryRunner.connect).toHaveBeenCalled();
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(LockService.acquireUserLock).toHaveBeenCalledWith(mockQueryRunner, 3);
+      expect(mockInstrumentService.getInstrument).toHaveBeenCalledWith(47, mockQueryRunner);
+      expect(mockMarketDataService.getMarketPrice).toHaveBeenCalledWith(47, mockQueryRunner);
       expect(mockPortfolioService.getPortfolio).toHaveBeenCalledWith(3);
       expect(mockBuilder.validateInput).toHaveBeenCalledWith(input);
       expect(mockBuilder.buildOrder).toHaveBeenCalledWith(input, instrument, 925.85);
       expect(mockProcessor.validateOrder).toHaveBeenCalledWith(10000, mockPortfolio.positionsMap);
       expect(mockProcessor.determineStatus).toHaveBeenCalledWith(true);
-      expect(mockOrderRepository.save).toHaveBeenCalledWith(mockOrder);
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(Order, mockOrder);
       expect(result).toEqual(mockOrder);
     });
 
@@ -159,7 +181,7 @@ describe('OrderService', () => {
       mockBuilder.buildOrder.mockReturnValue({ order: mockOrder });
       mockProcessor.validateOrder.mockReturnValue(true);
       mockProcessor.determineStatus.mockReturnValue(OrderStatus.NEW);
-      mockOrderRepository.save.mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
 
       const result = await service.createOrder(input);
 
@@ -192,7 +214,7 @@ describe('OrderService', () => {
       mockBuilder.buildOrder.mockReturnValue({ order: mockOrder, marketPrice: 1 });
       mockProcessor.validateOrder.mockReturnValue(true);
       mockProcessor.determineStatus.mockReturnValue(OrderStatus.FILLED);
-      mockOrderRepository.save.mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
 
       const result = await service.createOrder(input);
 
@@ -224,12 +246,68 @@ describe('OrderService', () => {
       mockBuilder.buildOrder.mockReturnValue({ order: mockOrder, marketPrice: 1 });
       mockProcessor.validateOrder.mockReturnValue(true);
       mockProcessor.determineStatus.mockReturnValue(OrderStatus.FILLED);
-      mockOrderRepository.save.mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
 
       const result = await service.createOrder(input);
 
       expect(mockMarketDataService.getMarketPrice).not.toHaveBeenCalled();
       expect(result.status).toBe(OrderStatus.FILLED);
+    });
+
+    it('should handle rollback on error', async () => {
+      const input: CreateOrderInput = {
+        userId: 3,
+        instrumentId: 47,
+        side: OrderSide.BUY,
+        type: OrderType.MARKET,
+        size: 10,
+      };
+
+      const instrument = createMockInstrument(47, 'MOLI');
+      const error = new Error('Database error');
+      mockInstrumentService.getInstrument.mockResolvedValue(instrument);
+      mockMarketDataService.getMarketPrice.mockRejectedValue(error);
+
+      await expect(service.createOrder(input)).rejects.toThrow('Database error');
+
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should acquire lock before processing order', async () => {
+      const input: CreateOrderInput = {
+        userId: 3,
+        instrumentId: 47,
+        side: OrderSide.BUY,
+        type: OrderType.MARKET,
+        size: 10,
+      };
+
+      const instrument = createMockInstrument(47, 'MOLI');
+      const mockOrder = createMockOrder(input, OrderStatus.FILLED);
+      const mockPortfolio = {
+        totalValue: 1000,
+        availableCash: 10000,
+        positions: [],
+        positionsMap: new Map(),
+      };
+
+      mockInstrumentService.getInstrument.mockResolvedValue(instrument);
+      mockMarketDataService.getMarketPrice.mockResolvedValue(925.85);
+      mockPortfolioService.getPortfolio.mockResolvedValue(mockPortfolio as any);
+      mockBuilder.buildOrder.mockReturnValue({ order: mockOrder, marketPrice: 925.85 });
+      mockProcessor.validateOrder.mockReturnValue(true);
+      mockProcessor.determineStatus.mockReturnValue(OrderStatus.FILLED);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
+
+      await service.createOrder(input);
+
+      expect(LockService.acquireUserLock).toHaveBeenCalledWith(mockQueryRunner, 3);
+      // Verificar que el lock se adquiere antes de obtener el instrumento
+      const lockCallOrder = (LockService.acquireUserLock as jest.Mock).mock.invocationCallOrder[0];
+      const instrumentCallOrder = (mockInstrumentService.getInstrument as jest.Mock).mock.invocationCallOrder[0];
+      expect(lockCallOrder).toBeLessThan(instrumentCallOrder);
     });
 
     it('should save order with correct status', async () => {
@@ -256,11 +334,12 @@ describe('OrderService', () => {
       mockBuilder.buildOrder.mockReturnValue({ order: mockOrder, marketPrice: 925.85 });
       mockProcessor.validateOrder.mockReturnValue(true);
       mockProcessor.determineStatus.mockReturnValue(OrderStatus.FILLED);
-      mockOrderRepository.save.mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock).mockResolvedValue(mockOrder);
 
       await service.createOrder(input);
 
-      expect(mockOrderRepository.save).toHaveBeenCalledWith(
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        Order,
         expect.objectContaining({
           status: OrderStatus.FILLED,
         })

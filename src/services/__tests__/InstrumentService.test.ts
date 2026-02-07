@@ -1,7 +1,7 @@
 import { InstrumentService } from '../InstrumentService';
 import { AppDataSource } from '../../config/database';
 import { Instrument } from '../../entities/Instrument';
-import { Repository, ILike, Raw } from 'typeorm';
+import { Repository, ILike, Raw, QueryRunner } from 'typeorm';
 import { NotFoundError } from '../../errors/NotFoundError';
 
 jest.mock('../../config/database');
@@ -15,6 +15,9 @@ describe('InstrumentService', () => {
       find: jest.fn(),
       count: jest.fn(),
       findOne: jest.fn(),
+      manager: {
+        findOne: jest.fn(),
+      } as any,
     } as any;
 
     (AppDataSource.getRepository as jest.Mock) = jest.fn(() => mockRepository);
@@ -135,29 +138,29 @@ describe('InstrumentService', () => {
         type: 'ACCIONES' as any,
       };
 
-      mockRepository.findOne = jest.fn().mockResolvedValue(mockInstrument);
+      (mockRepository.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(mockInstrument);
 
       const result = await service.getInstrument(47);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.manager.findOne).toHaveBeenCalledWith(Instrument, {
         where: { id: 47 },
       });
       expect(result).toEqual(mockInstrument);
     });
 
     it('should throw NotFoundError when instrument is not found', async () => {
-      mockRepository.findOne = jest.fn().mockResolvedValue(null);
+      (mockRepository.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(null);
 
       await expect(service.getInstrument(999)).rejects.toThrow(NotFoundError);
       await expect(service.getInstrument(999)).rejects.toThrow('Instrument with id 999 not found');
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.manager.findOne).toHaveBeenCalledWith(Instrument, {
         where: { id: 999 },
       });
     });
 
     it('should throw NotFoundError with correct message format', async () => {
-      mockRepository.findOne = jest.fn().mockResolvedValue(null);
+      (mockRepository.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(null);
 
       try {
         await service.getInstrument(123);
@@ -171,6 +174,42 @@ describe('InstrumentService', () => {
           expect(error.message).toBe('Instrument with id 123 not found');
         }
       }
+    });
+
+    it('should use QueryRunner manager when provided', async () => {
+      const mockInstrument: Instrument = {
+        id: 47,
+        ticker: 'MOLI',
+        name: 'Molinos Río de la Plata',
+        type: 'ACCIONES' as any,
+      };
+
+      const mockQueryRunner = {
+        manager: {
+          findOne: jest.fn().mockResolvedValue(mockInstrument),
+        },
+      } as unknown as QueryRunner;
+
+      const result = await service.getInstrument(47, mockQueryRunner);
+
+      expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(Instrument, {
+        where: { id: 47 },
+      });
+      expect(mockRepository.findOne).not.toHaveBeenCalled();
+      expect(result).toEqual(mockInstrument);
+    });
+
+    it('should throw NotFoundError when using QueryRunner and instrument is not found', async () => {
+      const mockQueryRunner = {
+        manager: {
+          findOne: jest.fn().mockResolvedValue(null),
+        },
+      } as unknown as QueryRunner;
+
+      await expect(service.getInstrument(999, mockQueryRunner)).rejects.toThrow(NotFoundError);
+      expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(Instrument, {
+        where: { id: 999 },
+      });
     });
   });
 });

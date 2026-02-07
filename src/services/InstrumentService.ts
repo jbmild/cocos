@@ -1,7 +1,7 @@
 import { AppDataSource } from '../config/database';
 import { Instrument } from '../entities/Instrument';
 import { InstrumentType } from '../enums/InstrumentType';
-import { Repository, ILike, Raw } from 'typeorm';
+import { Repository, ILike, Raw, QueryRunner } from 'typeorm';
 import { NotFoundError } from '../errors/NotFoundError';
 
 export class InstrumentService {
@@ -68,9 +68,12 @@ export class InstrumentService {
   /**
    * Obtiene un instrumento por su ID. Throws error si el instrumento no existe
    *  instrumentId: ID del instrumento
+   *  queryRunner: QueryRunner opcional para usar dentro de una transaccion
    */
-  async getInstrument(instrumentId: number): Promise<Instrument> {
-    const instrument = await this.instrumentRepository.findOne({
+  async getInstrument(instrumentId: number, queryRunner?: QueryRunner): Promise<Instrument> {
+    const manager = queryRunner?.manager || this.instrumentRepository.manager;
+    
+    const instrument = await manager.findOne(Instrument, {
       where: { id: instrumentId },
     });
 
