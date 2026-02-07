@@ -314,8 +314,8 @@ collection:
     meta:
       id: fld_4ab5dfa7ecf84e54a183cdf873d2934d
       created: 1770434017889
-      modified: 1770434030108
-      sortKey: -1770248392207
+      modified: 1770439515505
+      sortKey: -1770248392282
       description: ""
     children:
       - url: "{{URL}}/orders"
@@ -535,7 +535,7 @@ collection:
         meta:
           id: req_e0f9577dfdc04e458b8376d167ba06d3
           created: 1770434331856
-          modified: 1770434496785
+          modified: 1770439675489
           isPrivate: false
           description: ""
           sortKey: -1770434069914.5625
@@ -869,6 +869,83 @@ collection:
         headers:
           - name: Content-Type
             value: application/json
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Cancel order
+    meta:
+      id: fld_a3f9e3b23c824481adef27984a007a47
+      created: 1770439500131
+      modified: 1770439513445
+      sortKey: -1770248392257
+      description: ""
+    children:
+      - url: "{{URL}}/orders/35/cancel"
+        name: Cancel
+        meta:
+          id: req_4b63f3d4ec2546f4a0b2ba4a3cd1e00d
+          created: 1770439519074
+          modified: 1770439699025
+          isPrivate: false
+          description: ""
+          sortKey: -1770439519074
+        method: PATCH
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/orders/a/cancel"
+        name: Cancel with invalid order id
+        meta:
+          id: req_1bd03fa520c546cf988f5726ee5fef95
+          created: 1770439711299
+          modified: 1770439739343
+          isPrivate: false
+          description: ""
+          sortKey: -1770436794543.5
+        method: PATCH
+        headers:
+          - name: User-Agent
+            value: insomnia/12.3.0
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{URL}}/orders/99999/cancel"
+        name: Cancel unexisting order
+        meta:
+          id: req_7e6efeaa3bcc4e6da0592a3b6fc9da56
+          created: 1770439761104
+          modified: 1770439767611
+          isPrivate: false
+          description: ""
+          sortKey: -1770435432278.25
+        method: PATCH
+        headers:
           - name: User-Agent
             value: insomnia/12.3.0
             description: ""

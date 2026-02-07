@@ -346,4 +346,85 @@ describe('OrderService', () => {
       );
     });
   });
+
+  describe('cancelOrder', () => {
+    const createMockOrderForCancel = (
+      id: number,
+      userId: number,
+      status: OrderStatus = OrderStatus.NEW
+    ): Order => {
+      const order = new Order();
+      order.id = id;
+      order.userId = userId;
+      order.instrumentId = 47;
+      order.side = OrderSide.BUY;
+      order.type = OrderType.LIMIT;
+      order.size = 10;
+      order.price = 900;
+      order.status = status;
+      order.datetime = new Date();
+      return order;
+    };
+
+    it('should cancel order successfully when order is NEW', async () => {
+      const orderId = 1;
+      const userId = 3;
+      const mockOrder = createMockOrderForCancel(orderId, userId, OrderStatus.NEW);
+      const cancelledOrder = { ...mockOrder, status: OrderStatus.CANCELLED };
+
+      (mockQueryRunner.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(mockOrder);
+      (mockQueryRunner.manager.save as jest.Mock) = jest.fn().mockResolvedValue(cancelledOrder);
+
+      const result = await service.cancelOrder(orderId);
+
+      expect(mockQueryRunner.connect).toHaveBeenCalled();
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(LockService.acquireUserLock).toHaveBeenCalledWith(mockQueryRunner, userId);
+      expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(Order, {
+        where: { id: orderId },
+      });
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        Order,
+        expect.objectContaining({
+          id: orderId,
+          userId,
+          status: OrderStatus.CANCELLED,
+        })
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+
+    it('should throw NotFoundError when order does not exist', async () => {
+      const orderId = 999;
+
+      (mockQueryRunner.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(null);
+
+      await expect(service.cancelOrder(orderId)).rejects.toThrow(NotFoundError);
+      await expect(service.cancelOrder(orderId)).rejects.toThrow(`Order with id ${orderId} not found`);
+
+      expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(Order, {
+        where: { id: orderId },
+      });
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
+    it('should throw ValidationError when order status is not NEW', async () => {
+      const orderId = 1;
+      const userId = 3;
+      const mockOrder = createMockOrderForCancel(orderId, userId, OrderStatus.FILLED);
+
+      (mockQueryRunner.manager.findOne as jest.Mock) = jest.fn().mockResolvedValue(mockOrder);
+
+      await expect(service.cancelOrder(orderId)).rejects.toThrow(ValidationError);
+      await expect(service.cancelOrder(orderId)).rejects.toThrow(
+        'Cannot cancel order with status FILLED. Only orders with status NEW can be cancelled'
+      );
+
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+  });
 });
