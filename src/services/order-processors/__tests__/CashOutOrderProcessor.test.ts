@@ -3,6 +3,7 @@ import { Order } from '../../../entities/Order';
 import { Instrument } from '../../../entities/Instrument';
 import { InstrumentType } from '../../../enums/InstrumentType';
 import { OrderSide } from '../../../enums/OrderSide';
+import { OrderStatus } from '../../../enums/OrderStatus';
 
 describe('CashOutOrderProcessor', () => {
   const createMockInstrument = (ticker: string, type: InstrumentType = InstrumentType.ACCIONES): Instrument => {
@@ -29,13 +30,28 @@ describe('CashOutOrderProcessor', () => {
   };
 
   describe('processCash', () => {
-    it('should decrease cash when processing CASH_OUT with ARS ticker', () => {
+    it('should decrease cash when processing CASH_OUT with cash instrument', () => {
       const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
       const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
       const processor = new CashOutOrderProcessor(order);
 
       const result = processor.processCash(1000);
       expect(result).toBe(500); // 1000 - 500
+    });
+
+    it('should not affect cash when processing CASH_OUT with non-cash instrument', () => {
+      const instrument = createMockInstrument('AAPL');
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const result = processor.processCash(1000);
+      expect(result).toBe(1000); // No change for non-cash instruments
+    });
+
+    it('should not affect cash when instrument is null', () => {
+      const order = createMockOrder(OrderSide.CASH_OUT, null, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const result = processor.processCash(1000);
+      expect(result).toBe(1000); // No change when no instrument
     });
   });
 
@@ -68,6 +84,77 @@ describe('CashOutOrderProcessor', () => {
       const result = processor.processPositions(positions);
 
       expect(result.size).toBe(0);
+    });
+  });
+
+  describe('validateOrder', () => {
+    it('should return false when instrument is null', () => {
+      const order = createMockOrder(OrderSide.CASH_OUT, null, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const positions = new Map();
+
+      const result = processor.validateOrder(1000, positions);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when instrument is not cash', () => {
+      const instrument = createMockInstrument('AAPL');
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const positions = new Map();
+
+      const result = processor.validateOrder(1000, positions);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when insufficient cash', () => {
+      const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const positions = new Map();
+
+      const result = processor.validateOrder(300, positions); // Only 300, need 500
+      expect(result).toBe(false);
+    });
+
+    it('should return true when sufficient cash', () => {
+      const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const positions = new Map();
+
+      const result = processor.validateOrder(1000, positions);
+      expect(result).toBe(true);
+    });
+
+    it('should return true when cash exactly matches order size', () => {
+      const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+      const positions = new Map();
+
+      const result = processor.validateOrder(500, positions); // Exactly 500
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('determineStatus', () => {
+    it('should return FILLED for valid order', () => {
+      const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+
+      const result = processor.determineStatus(true);
+      expect(result).toBe(OrderStatus.FILLED);
+    });
+
+    it('should return REJECTED for invalid order', () => {
+      const instrument = createMockInstrument('ARS', InstrumentType.MONEDA);
+      const order = createMockOrder(OrderSide.CASH_OUT, instrument, 500);
+      const processor = new CashOutOrderProcessor(order);
+
+      const result = processor.determineStatus(false);
+      expect(result).toBe(OrderStatus.REJECTED);
     });
   });
 });

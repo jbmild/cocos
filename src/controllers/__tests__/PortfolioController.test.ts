@@ -56,6 +56,7 @@ describe('PortfolioController', () => {
             totalReturn: 10,
           },
         ],
+        positionsMap: new Map(),
       };
 
       mockPortfolioService.getPortfolio = jest.fn().mockResolvedValue(mockPortfolio);
@@ -63,9 +64,11 @@ describe('PortfolioController', () => {
       await controller.getPortfolio(mockRequest as Request, mockResponse as Response);
 
       expect(mockPortfolioService.getPortfolio).toHaveBeenCalledWith(1);
+      // Verificar que positionsMap no se incluye en la respuesta
+      const { positionsMap, ...expectedData } = mockPortfolio;
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
-        data: mockPortfolio,
+        data: expectedData,
       });
     });
 

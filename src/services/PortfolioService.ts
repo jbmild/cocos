@@ -20,6 +20,7 @@ export interface Portfolio {
   totalValue: number;
   availableCash: number;
   positions: Position[];
+  positionsMap: Map<number, { quantity: number; totalCost: number; instrument: Instrument }>;
 }
 
 export class PortfolioService {
@@ -48,8 +49,11 @@ export class PortfolioService {
     // Calcular pesos cash
     const availableCash = this.calculateAvailableCash(filledOrders);
 
-    // Calcular posiciones sin cash
-    const positions = await this.calculatePositions(userId, filledOrders);
+    // Calcular mapa de posiciones (reutiliza las ordenes ya cargadas)
+    const positionsMap = this.buildPositionsMap(filledOrders);
+
+    // Calcular posiciones sin cash (reutiliza el positionsMap ya calculado)
+    const positions = await this.calculatePositions(positionsMap);
 
     // Calcular valor total (cash + valor de mercado de posiciones)
     const totalValue = availableCash + positions.reduce((sum, pos) => sum + pos.marketValue, 0);
@@ -58,8 +62,10 @@ export class PortfolioService {
       totalValue,
       availableCash,
       positions,
+      positionsMap,
     };
   }
+
 
   /**
    * Calcula el cash disponible basado en ordenes FILLED
@@ -85,21 +91,7 @@ export class PortfolioService {
   /**
    * Calcula las posiciones del usuario (excluyendo cash)
    */
-  private async calculatePositions(userId: number, filledOrders: Order[]): Promise<Position[]> {
-    // excluir cash
-    const validOrders = filledOrders.filter(
-      (order) =>
-        order.instrument?.ticker !== 'ARS' &&
-        order.instrument?.type !== InstrumentType.MONEDA
-    );
-
-    // Procesar ordenes y obtener posiciones
-    let positionsMap = new Map<number, { quantity: number; totalCost: number; instrument: Instrument }>();
-    for (const order of validOrders) {
-      const processor = OrderProcessorFactory.create(order);
-      // El procesador recibe el mapa completo y lo transforma
-      positionsMap = processor.processPositions(positionsMap);
-    }
+  private async calculatePositions(positionsMap: Map<number, { quantity: number; totalCost: number; instrument: Instrument }>): Promise<Position[]> {
 
     // Validar que no haya posiciones negativas (estado inconsistente)
     const negativePositions = Array.from(positionsMap.entries()).filter(
@@ -148,5 +140,35 @@ export class PortfolioService {
     );
 
     return positions.sort((a, b) => a.ticker.localeCompare(b.ticker));
+  }
+
+  /**
+   * Construye el mapa de posiciones a partir de las ordenes ya cargadas
+   * Metodo privado para reutilizar la logica sin volver a buscar las ordenes
+   */
+  private buildPositionsMap(filledOrders: Order[]): Map<number, { quantity: number; totalCost: number; instrument: Instrument }> {
+    const validOrders = filledOrders.filter(
+      (order) =>
+        order.instrument?.ticker !== 'ARS' &&
+        order.instrument?.type !== InstrumentType.MONEDA
+    );
+
+    let positionsMap = new Map<number, { quantity: number; totalCost: number; instrument: Instrument }>();
+    for (const order of validOrders) {
+      if (!order.instrument) {
+        continue;
+      }
+      if (!positionsMap.has(order.instrumentId)) {
+        positionsMap.set(order.instrumentId, {
+          quantity: 0,
+          totalCost: 0,
+          instrument: order.instrument,
+        });
+      }
+      const processor = OrderProcessorFactory.create(order);
+      positionsMap = processor.processPositions(positionsMap);
+    }
+
+    return positionsMap;
   }
 }

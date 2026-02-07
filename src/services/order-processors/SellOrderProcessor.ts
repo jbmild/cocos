@@ -2,6 +2,8 @@ import { OrderProcessor } from './OrderProcessor';
 import { Order } from '../../entities/Order';
 import { Instrument } from '../../entities/Instrument';
 import { InstrumentType } from '../../enums/InstrumentType';
+import { OrderStatus } from '../../enums/OrderStatus';
+import { OrderType } from '../../enums/OrderType';
 
 export class SellOrderProcessor implements OrderProcessor {
   constructor(private order: Order) {}
@@ -48,5 +50,44 @@ export class SellOrderProcessor implements OrderProcessor {
     position.totalCost = position.quantity * avgCostBeforeSell;
 
     return positions;
+  }
+
+  validateOrder(
+    availableCash: number,
+    positions: Map<number, { quantity: number; totalCost: number; instrument: Instrument }>
+  ): boolean {
+    // Obtener instrumento de la orden
+    if (!this.order.instrument) {
+      return false;
+    }
+
+    const instrument = this.order.instrument;
+
+    // Validar que no sea un instrumento de cash
+    const isCashInstrument =
+      instrument.ticker === 'ARS' ||
+      instrument.type === InstrumentType.MONEDA;
+
+    if (isCashInstrument) {
+      return false;
+    }
+
+    const instrumentId = this.order.instrumentId;
+    const size = Number(this.order.size);
+
+    if (!positions.has(instrumentId)) {
+      return false;
+    }
+
+    const position = positions.get(instrumentId)!;
+    return position.quantity >= size;
+  }
+
+  determineStatus(isValid: boolean): OrderStatus {
+    if (!isValid) {
+      return OrderStatus.REJECTED;
+    }
+
+    return this.order.type === OrderType.MARKET ? OrderStatus.FILLED : OrderStatus.NEW;
   }
 }

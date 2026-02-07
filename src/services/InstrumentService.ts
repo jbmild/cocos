@@ -2,6 +2,7 @@ import { AppDataSource } from '../config/database';
 import { Instrument } from '../entities/Instrument';
 import { InstrumentType } from '../enums/InstrumentType';
 import { Repository, ILike, Raw } from 'typeorm';
+import { NotFoundError } from '../errors/NotFoundError';
 
 export class InstrumentService {
   private instrumentRepository: Repository<Instrument>;
@@ -62,5 +63,21 @@ export class InstrumentService {
         { name: Raw((alias) => `unaccent(${alias}) ILIKE unaccent(:search)`, { search: `%${searchTerm}%` }) },
       ],
     });
+  }
+
+  /**
+   * Obtiene un instrumento por su ID. Throws error si el instrumento no existe
+   *  instrumentId: ID del instrumento
+   */
+  async getInstrument(instrumentId: number): Promise<Instrument> {
+    const instrument = await this.instrumentRepository.findOne({
+      where: { id: instrumentId },
+    });
+
+    if (!instrument) {
+      throw new NotFoundError(`Instrument with id ${instrumentId} not found`);
+    }
+
+    return instrument;
   }
 }

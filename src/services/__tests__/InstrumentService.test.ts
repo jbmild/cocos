@@ -2,6 +2,7 @@ import { InstrumentService } from '../InstrumentService';
 import { AppDataSource } from '../../config/database';
 import { Instrument } from '../../entities/Instrument';
 import { Repository, ILike, Raw } from 'typeorm';
+import { NotFoundError } from '../../errors/NotFoundError';
 
 jest.mock('../../config/database');
 
@@ -13,6 +14,7 @@ describe('InstrumentService', () => {
     mockRepository = {
       find: jest.fn(),
       count: jest.fn(),
+      findOne: jest.fn(),
     } as any;
 
     (AppDataSource.getRepository as jest.Mock) = jest.fn(() => mockRepository);
@@ -122,6 +124,53 @@ describe('InstrumentService', () => {
       });
       expect(result).toBe(5);
     });
+  });
 
+  describe('getInstrument', () => {
+    it('should return instrument when found', async () => {
+      const mockInstrument: Instrument = {
+        id: 47,
+        ticker: 'MOLI',
+        name: 'Molinos Río de la Plata',
+        type: 'ACCIONES' as any,
+      };
+
+      mockRepository.findOne = jest.fn().mockResolvedValue(mockInstrument);
+
+      const result = await service.getInstrument(47);
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 47 },
+      });
+      expect(result).toEqual(mockInstrument);
+    });
+
+    it('should throw NotFoundError when instrument is not found', async () => {
+      mockRepository.findOne = jest.fn().mockResolvedValue(null);
+
+      await expect(service.getInstrument(999)).rejects.toThrow(NotFoundError);
+      await expect(service.getInstrument(999)).rejects.toThrow('Instrument with id 999 not found');
+
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 999 },
+      });
+    });
+
+    it('should throw NotFoundError with correct message format', async () => {
+      mockRepository.findOne = jest.fn().mockResolvedValue(null);
+
+      try {
+        await service.getInstrument(123);
+        fail('Should have thrown NotFoundError');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundError);
+        expect(error).toBeInstanceOf(Error);
+        if (error instanceof NotFoundError) {
+          expect(error.statusCode).toBe(404);
+          expect(error.errorType).toBe('Resource not found');
+          expect(error.message).toBe('Instrument with id 123 not found');
+        }
+      }
+    });
   });
 });

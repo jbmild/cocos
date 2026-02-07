@@ -18,9 +18,12 @@ export class PortfolioController {
 
       const portfolio = await this.portfolioService.getPortfolio(userId);
 
+      // Excluir positionsMap de la respuesta (solo es para uso interno)
+      const { positionsMap, ...portfolioResponse } = portfolio;
+
       res.json({
         success: true,
-        data: portfolio,
+        data: portfolioResponse,
       });
     } catch (error) {
       console.error('Error getting portfolio:', error);
