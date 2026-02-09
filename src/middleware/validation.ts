@@ -13,10 +13,19 @@ export const validate = (schema: ZodSchema, source: 'body' | 'query' | 'params' 
     const validationResult = schema.safeParse(dataToValidate);
 
     if (!validationResult.success) {
+      const issues = validationResult.error.issues;
+      const hasMultipleErrors = issues.length > 1;
+      
+      // Si hay múltiples errores, usar un mensaje genérico
+      // Si hay un solo error, usar el mensaje específico
+      const errorMessage = hasMultipleErrors
+        ? `Invalid ${source} parameters: ${issues.length} validation errors found`
+        : (issues[0]?.message || `Invalid ${source} parameters`);
+      
       res.status(400).json({
         error: 'Validation error',
-        message: `Invalid ${source} parameters`,
-        details: validationResult.error.issues.map((err) => ({
+        message: errorMessage,
+        details: issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         })),

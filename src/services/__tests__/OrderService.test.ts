@@ -72,6 +72,7 @@ describe('OrderService', () => {
       commitTransaction: jest.fn().mockResolvedValue(undefined),
       rollbackTransaction: jest.fn().mockResolvedValue(undefined),
       release: jest.fn().mockResolvedValue(undefined),
+      isTransactionActive: true, // Simular que la transacción está activa
       manager: mockManager as any,
     } as any;
 

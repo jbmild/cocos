@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: cocos-test-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"  # Puerto diferente al de desarrollo para evitar conflictos
+    volumes:
+      - ./database.sql:/scripts/database.sql:ro
+      - ./database-extended.sql:/scripts/database-extended.sql:ro
+      - ./docker/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
+      - postgres-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cocos-test-network
+
+volumes:
+  postgres-test-data:
+    driver: local
+
+networks:
+  cocos-test-network:
+    driver: bridge

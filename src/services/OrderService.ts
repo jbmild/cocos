@@ -84,10 +84,20 @@ export class OrderService {
       await queryRunner.commitTransaction();
       return savedOrder;
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        try {
+          await queryRunner.rollbackTransaction();
+        } catch (rollbackError) {
+          // Ignorar errores de rollback si el QueryRunner ya fue liberado
+        }
+      }
       throw error;
     } finally {
-      await queryRunner.release();
+      try {
+        await queryRunner.release();
+      } catch (releaseError) {
+        // Ignorar errores si el QueryRunner ya fue liberado
+      }
     }
   }
 
@@ -121,10 +131,20 @@ export class OrderService {
       await queryRunner.commitTransaction();
       return savedOrder;
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        try {
+          await queryRunner.rollbackTransaction();
+        } catch (rollbackError) {
+          // Ignorar errores de rollback si el QueryRunner ya fue liberado
+        }
+      }
       throw error;
     } finally {
-      await queryRunner.release();
+      try {
+        await queryRunner.release();
+      } catch (releaseError) {
+        // Ignorar errores si el QueryRunner ya fue liberado
+      }
     }
   }
 
