@@ -85,6 +85,19 @@ Este proyecto incluye documentación sobre decisiones de diseño y arquitectura:
 - [Diseño del Endpoint de Portfolio](./docs/PORTFOLIO_DESIGN.md) - Arquitectura y patrones de diseño utilizados en el endpoint de portfolio
 - [Decisión de Implementación: Endpoint de Cancelación de Órdenes](./docs/CANCEL_ORDER_DECISION.md) - Justificación y diseño del endpoint de cancelación de órdenes
 
+## Mejoras y Oportunidades Futuras
+
+Las siguientes mejoras podrían implementarse para extender la funcionalidad de la plataforma:
+
+1. **Implementación de autenticación de usuarios**: Agregar un sistema de autenticación (JWT, OAuth, etc.) para proteger los endpoints y asegurar que los usuarios solo accedan a sus propios datos.
+
+2. **Simulación de mercado**: Implementar un motor de simulación de mercado que procese las órdenes LIMIT automáticamente cuando se cumplan las condiciones de precio, permitiendo una experiencia más realista de trading.
+
+3. **Soporte multi-moneda**: Extender la plataforma para soportar múltiples monedas además del peso argentino (ARS), como dólares (USD), euros (EUR), yuanes (CNY), etc. Esto requeriría:
+   - Actualizar el modelo de datos para incluir información de moneda
+   - Modificar la lógica de cálculo de portfolios para manejar conversiones
+   - Agregar soporte para órdenes en diferentes monedas
+
 ## Insomnia Collection
 
 Recordar configurar la URL donde corre el proyecto en la variable `URL` en el `Base Environment`.
