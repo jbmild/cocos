@@ -39,7 +39,50 @@ ENABLE_PORTFOLIO_SNAPSHOT=false
 
 ### 2. Base de Datos
 
-Crea la base de datos y carga el schema si no los tienes aun:
+Tienes dos opciones para configurar la base de datos:
+
+#### Opción A: Usando Docker (Recomendado)
+
+Levanta la base de datos de desarrollo usando Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+Esto creará un contenedor PostgreSQL con:
+- **Base de datos**: `cocos`
+- **Usuario**: `cocos_user`
+- **Contraseña**: `cocos_password`
+- **Puerto**: `5432`
+
+El contenedor ejecutará automáticamente los scripts SQL necesarios (`database.sql`, `database-extended.sql`, `database-portfolio-snapshots.sql`) para inicializar el schema.
+
+Para detener la base de datos:
+
+```bash
+docker compose down
+```
+
+Para detener y eliminar los datos (volumen):
+
+```bash
+docker compose down -v
+```
+
+**Importante**: Asegúrate de configurar tu archivo `.env` con estas credenciales:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=cocos_user
+DB_PASSWORD=cocos_password
+DB_NAME=cocos
+DB_SSL=false
+```
+
+#### Opción B: Instalación Manual
+
+Si prefieres usar una instalación local o remota de PostgreSQL, crea la base de datos y carga el schema manualmente:
 
 ```bash
 psql -U postgres -c "CREATE DATABASE cocos;"

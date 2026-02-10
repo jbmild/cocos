@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: cocos-dev-db
+    environment:
+      POSTGRES_USER: cocos_user
+      POSTGRES_PASSWORD: cocos_password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"  # Puerto estándar de PostgreSQL
+    volumes:
+      - ./database.sql:/scripts/database.sql:ro
+      - ./database-extended.sql:/scripts/database-extended.sql:ro
+      - ./database-portfolio-snapshots.sql:/scripts/database-portfolio-snapshots.sql:ro
+      - ./docker/init-dev-db.sh:/docker-entrypoint-initdb.d/init-dev-db.sh:ro
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cocos_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cocos-dev-network
+
+volumes:
+  postgres-dev-data:
+    driver: local
+
+networks:
+  cocos-dev-network:
+    driver: bridge
