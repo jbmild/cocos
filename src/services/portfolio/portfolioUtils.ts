@@ -65,9 +65,11 @@ export async function calculatePositions(
       });
 
       const currentPrice = latestMarketData?.close ? Number(latestMarketData.close) : 0;
+      const previousPrice = latestMarketData?.previousClose ? Number(latestMarketData.previousClose) : 0;
       const marketValue = position.quantity * currentPrice;
       const avgCost = position.totalCost / position.quantity;
-      const totalReturn = avgCost > 0 ? ((currentPrice - avgCost) / avgCost) * 100 : 0;
+      const totalReturn = avgCost > 0 ? Number((((currentPrice - avgCost) / avgCost) * 100).toFixed(2)) : 0;
+      const dailyReturn = previousPrice > 0 ? Number((((currentPrice - previousPrice) / previousPrice) * 100).toFixed(2)) : 0;
 
       return {
         instrumentId,
@@ -76,6 +78,7 @@ export async function calculatePositions(
         quantity: position.quantity,
         marketValue,
         totalReturn,
+        dailyReturn,
       };
     })
   );

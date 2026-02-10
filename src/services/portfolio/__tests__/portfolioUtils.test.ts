@@ -189,6 +189,7 @@ describe('portfolioUtils', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60; // current price = 60
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -196,8 +197,9 @@ describe('portfolioUtils', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].quantity).toBe(10);
-      expect(result[0].marketValue).toBe(600); // 10 * 60
-      expect(result[0].totalReturn).toBe(20); // ((60 - 50) / 50) * 100
+      expect(result[0].marketValue).toBe(600);
+      expect(result[0].totalReturn).toBe(20);
+      expect(result[0].dailyReturn).toBe(9.09);
     });
 
     it('should throw error when positions are negative', async () => {
@@ -247,6 +249,7 @@ describe('portfolioUtils', () => {
       expect(result[0].marketValue).toBe(0); // No market data, price = 0
       // When avgCost > 0 and currentPrice = 0, totalReturn = ((0 - 50) / 50) * 100 = -100
       expect(result[0].totalReturn).toBe(-100);
+      expect(result[0].dailyReturn).toBe(0);
     });
 
     it('should sort positions by ticker', async () => {
@@ -267,6 +270,7 @@ describe('portfolioUtils', () => {
 
       const marketData = new MarketData();
       marketData.close = 50;
+      marketData.previousClose = 48;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -291,12 +295,60 @@ describe('portfolioUtils', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 58;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
       const result = await calculatePositions(positionsMap, mockMarketDataRepository);
 
       expect(result[0].totalReturn).toBe(0); // Should be 0 when avg cost is 0
+      expect(result[0].dailyReturn).toBe(3.45);
+    });
+
+    it('should calculate daily return correctly with previousClose', async () => {
+      const instrument = createMockInstrument(1, 'AAPL');
+      const positionsMap = new Map([
+        [1, {
+          quantity: 10,
+          totalCost: 500,
+          instrument,
+        }],
+      ]);
+
+      const marketData = new MarketData();
+      marketData.id = 1;
+      marketData.instrumentId = 1;
+      marketData.close = 100;
+      marketData.previousClose = 90;
+      marketData.date = new Date();
+      mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
+
+      const result = await calculatePositions(positionsMap, mockMarketDataRepository);
+
+      expect(result[0].dailyReturn).toBe(11.11);
+    });
+
+    it('should handle zero previousClose for daily return', async () => {
+      const instrument = createMockInstrument(1, 'AAPL');
+      const positionsMap = new Map([
+        [1, {
+          quantity: 10,
+          totalCost: 500,
+          instrument,
+        }],
+      ]);
+
+      const marketData = new MarketData();
+      marketData.id = 1;
+      marketData.instrumentId = 1;
+      marketData.close = 60;
+      marketData.previousClose = 0;
+      marketData.date = new Date();
+      mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
+
+      const result = await calculatePositions(positionsMap, mockMarketDataRepository);
+
+      expect(result[0].dailyReturn).toBe(0);
     });
   });
 });

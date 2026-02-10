@@ -54,6 +54,7 @@ describe('PortfolioController', () => {
             quantity: 10,
             marketValue: 500,
             totalReturn: 10,
+            dailyReturn: 5.5,
           },
         ],
         positionsMap: new Map(),

@@ -75,6 +75,7 @@ yarn start
 
 - `GET /instruments/search` - Búsqueda de instrumentos
 - `GET /portfolio/:userId` - Obtener portfolio de un usuario
+  - **Nota**: Cada posición en el portfolio incluye el campo `dailyReturn` (rendimiento diario), calculado utilizando las columnas `close` y `previousClose` de la tabla `marketdata`, según se especifica en los requerimientos del desafío.
 - `POST /orders` - Crear una orden
 - `PATCH /orders/:orderId/cancel` - Cancelar una orden
 

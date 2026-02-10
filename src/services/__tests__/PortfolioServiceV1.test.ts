@@ -115,6 +115,7 @@ describe('PortfolioServiceV1', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -221,6 +222,7 @@ describe('PortfolioServiceV1', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60; // current price = 60
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -228,6 +230,7 @@ describe('PortfolioServiceV1', () => {
 
       // totalReturn = ((60 - 50) / 50) * 100 = 20%
       expect(result.positions[0].totalReturn).toBe(20);
+      expect(result.positions[0].dailyReturn).toBeCloseTo(9.09, 2);
     });
 
     it('should return empty portfolio when user has no orders', async () => {
@@ -271,6 +274,7 @@ describe('PortfolioServiceV1', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 

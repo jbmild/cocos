@@ -135,6 +135,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -217,6 +218,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -289,6 +291,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -352,6 +355,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -388,6 +392,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 
@@ -460,6 +465,7 @@ describe('PortfolioServiceV2', () => {
       marketData.id = 1;
       marketData.instrumentId = 1;
       marketData.close = 60;
+      marketData.previousClose = 55;
       marketData.date = new Date();
       mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
 

@@ -9,6 +9,7 @@ export interface Position {
   quantity: number;
   marketValue: number;
   totalReturn: number;
+  dailyReturn: number;
 }
 
 export interface Portfolio {
