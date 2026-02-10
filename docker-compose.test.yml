@@ -13,6 +13,7 @@ services:
     volumes:
       - ./database.sql:/scripts/database.sql:ro
       - ./database-extended.sql:/scripts/database-extended.sql:ro
+      - ./database-portfolio-snapshots.sql:/scripts/database-portfolio-snapshots.sql:ro
       - ./docker/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
       - postgres-test-data:/var/lib/postgresql/data
     healthcheck:

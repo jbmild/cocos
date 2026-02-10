@@ -1,229 +1,92 @@
 import { PortfolioService } from '../PortfolioService';
-import { AppDataSource } from '../../config/database';
-import { Order } from '../../entities/Order';
-import { MarketData } from '../../entities/MarketData';
-import { Instrument } from '../../entities/Instrument';
-import { OrderStatus } from '../../enums/OrderStatus';
-import { OrderSide } from '../../enums/OrderSide';
-import { InstrumentType } from '../../enums/InstrumentType';
-import { Repository } from 'typeorm';
+import { PortfolioServiceV1 } from '../portfolio/PortfolioServiceV1';
+import { PortfolioServiceV2 } from '../portfolio/PortfolioServiceV2';
+import { Portfolio } from '../PortfolioService';
 
-jest.mock('../../config/database');
-jest.mock('../order-processors/OrderProcessorFactory');
+jest.mock('../portfolio/PortfolioServiceV1');
+jest.mock('../portfolio/PortfolioServiceV2');
 
-describe('PortfolioService', () => {
+describe('PortfolioService (Wrapper)', () => {
   let service: PortfolioService;
-  let mockOrderRepository: jest.Mocked<Repository<Order>>;
-  let mockMarketDataRepository: jest.Mocked<Repository<MarketData>>;
+  let mockV1GetPortfolio: jest.Mock;
+  let mockV2GetPortfolio: jest.Mock;
+  let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(() => {
-    mockOrderRepository = {
-      find: jest.fn(),
-    } as any;
+    originalEnv = { ...process.env };
 
-    mockMarketDataRepository = {
-      findOne: jest.fn(),
-    } as any;
+    mockV1GetPortfolio = jest.fn();
+    mockV2GetPortfolio = jest.fn();
 
-    (AppDataSource.getRepository as jest.Mock) = jest.fn((entity) => {
-      if (entity.name === 'Order') return mockOrderRepository;
-      if (entity.name === 'MarketData') return mockMarketDataRepository;
-      return {};
-    });
+    (PortfolioServiceV1 as jest.Mock).mockImplementation(() => ({
+      getPortfolio: mockV1GetPortfolio,
+    }));
+    (PortfolioServiceV2 as jest.Mock).mockImplementation(() => ({
+      getPortfolio: mockV2GetPortfolio,
+    }));
 
     service = new PortfolioService();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    process.env = originalEnv;
   });
 
-  const createMockInstrument = (id: number, ticker: string, type: InstrumentType = InstrumentType.ACCIONES): Instrument => {
-    const instrument = new Instrument();
-    instrument.id = id;
-    instrument.ticker = ticker;
-    instrument.name = `Instrument ${ticker}`;
-    instrument.type = type;
-    return instrument;
-  };
+  it('should delegate to V1 when flag is disabled', async () => {
+    process.env.ENABLE_PORTFOLIO_SNAPSHOT = 'false';
+    service = new PortfolioService(); // Re-initialize to pick up new env var
 
-  const createMockOrder = (
-    id: number,
-    userId: number,
-    instrument: Instrument | null,
-    side: OrderSide,
-    size: number,
-    price: number,
-    status: OrderStatus = OrderStatus.FILLED
-  ): Order => {
-    const order = new Order();
-    order.id = id;
-    order.userId = userId;
-    (order as any).instrumentId = instrument?.id || undefined;
-    (order as any).instrument = instrument || undefined;
-    order.side = side;
-    order.size = size;
-    order.price = price;
-    order.status = status;
-    order.datetime = new Date();
-    return order;
-  };
+    const mockPortfolio: Portfolio = {
+      totalValue: 1000,
+      availableCash: 500,
+      positions: [],
+      positionsMap: new Map(),
+    };
+    mockV1GetPortfolio.mockResolvedValue(mockPortfolio);
 
-  describe('getPortfolio', () => {
-    it('should return portfolio with cash and positions', async () => {
-      const instrument = createMockInstrument(1, 'AAPL');
-      const orders = [
-        createMockOrder(1, 1, createMockInstrument(999, 'ARS', InstrumentType.MONEDA), OrderSide.CASH_IN, 1000, 1),
-        createMockOrder(2, 1, instrument, OrderSide.BUY, 10, 50),
-      ];
+    const result = await service.getPortfolio(1);
 
-      mockOrderRepository.find = jest.fn().mockResolvedValue(orders);
+    expect(mockV1GetPortfolio).toHaveBeenCalledWith(1);
+    expect(mockV2GetPortfolio).not.toHaveBeenCalled();
+    expect(result).toEqual(mockPortfolio);
+  });
 
-      // Mock OrderProcessorFactory
-      const { OrderProcessorFactory } = require('../order-processors/OrderProcessorFactory');
-      OrderProcessorFactory.create = jest.fn((order) => {
-        const isCashIn = order.side === OrderSide.CASH_IN;
-        const isBuy = order.side === OrderSide.BUY;
-        return {
-          processCash: jest.fn((cash) => {
-            if (isCashIn) return cash + 1000;
-            if (isBuy) return cash - 500;
-            return cash;
-          }),
-          processPositions: jest.fn((positions) => {
-            if (isBuy) {
-              const newPositions = new Map(positions);
-              newPositions.set(1, {
-                quantity: 10,
-                totalCost: 500,
-                instrument,
-              });
-              return newPositions;
-            }
-            return positions;
-          }),
-        };
-      });
+  it('should delegate to V2 when flag is enabled', async () => {
+    process.env.ENABLE_PORTFOLIO_SNAPSHOT = 'true';
+    service = new PortfolioService(); // Re-initialize to pick up new env var
 
-      const marketData = new MarketData();
-      marketData.id = 1;
-      marketData.instrumentId = 1;
-      marketData.close = 60;
-      marketData.date = new Date();
-      mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
+    const mockPortfolio: Portfolio = {
+      totalValue: 2000,
+      availableCash: 1000,
+      positions: [],
+      positionsMap: new Map(),
+    };
+    mockV2GetPortfolio.mockResolvedValue(mockPortfolio);
 
-      const result = await service.getPortfolio(1);
+    const result = await service.getPortfolio(1);
 
-      expect(result.availableCash).toBe(500); // 1000 (CASH_IN) - 500 (BUY)
-      expect(result.positions).toHaveLength(1);
-      expect(result.positions[0].quantity).toBe(10);
-      expect(result.positions[0].marketValue).toBe(600); // 10 * 60
-      expect(result.totalValue).toBe(1100); // 500 + 600
-    });
+    expect(mockV2GetPortfolio).toHaveBeenCalledWith(1);
+    expect(mockV1GetPortfolio).not.toHaveBeenCalled();
+    expect(result).toEqual(mockPortfolio);
+  });
 
-    it('should exclude cash instruments from positions', async () => {
-      const orders = [
-        createMockOrder(1, 1, createMockInstrument(999, 'ARS', InstrumentType.MONEDA), OrderSide.CASH_IN, 1000, 1),
-      ];
+  it('should default to V1 when flag is not set', async () => {
+    delete process.env.ENABLE_PORTFOLIO_SNAPSHOT;
+    service = new PortfolioService(); // Re-initialize to pick up new env var
 
-      mockOrderRepository.find = jest.fn().mockResolvedValue(orders);
+    const mockPortfolio: Portfolio = {
+      totalValue: 1000,
+      availableCash: 500,
+      positions: [],
+      positionsMap: new Map(),
+    };
+    mockV1GetPortfolio.mockResolvedValue(mockPortfolio);
 
-      const { OrderProcessorFactory } = require('../order-processors/OrderProcessorFactory');
-      const mockProcessor = {
-        processCash: jest.fn((cash) => cash + 1000),
-        processPositions: jest.fn((positions) => positions),
-      };
-      OrderProcessorFactory.create = jest.fn().mockReturnValue(mockProcessor);
+    const result = await service.getPortfolio(1);
 
-      const result = await service.getPortfolio(1);
-
-      expect(result.positions).toHaveLength(0);
-    });
-
-    it('should throw error when cash is negative', async () => {
-      const orders = [
-        createMockOrder(1, 1, createMockInstrument(999, 'ARS', InstrumentType.MONEDA), OrderSide.CASH_OUT, 1000, 1),
-      ];
-
-      mockOrderRepository.find = jest.fn().mockResolvedValue(orders);
-
-      const { OrderProcessorFactory } = require('../order-processors/OrderProcessorFactory');
-      const mockProcessor = {
-        processCash: jest.fn((cash) => {
-          // Start with 0, subtract 1000 = -1000 (negative)
-          return cash - 1000;
-        }),
-        processPositions: jest.fn((positions) => positions),
-      };
-      OrderProcessorFactory.create = jest.fn().mockReturnValue(mockProcessor);
-
-      await expect(service.getPortfolio(1)).rejects.toThrow('inconsistent state');
-    });
-
-    it('should throw error when positions are negative', async () => {
-      const instrument = createMockInstrument(1, 'AAPL');
-      const orders = [
-        createMockOrder(1, 1, instrument, OrderSide.SELL, 10, 50),
-      ];
-
-      mockOrderRepository.find = jest.fn().mockResolvedValue(orders);
-
-      const { OrderProcessorFactory } = require('../order-processors/OrderProcessorFactory');
-      const mockProcessor = {
-        processCash: jest.fn((cash) => cash),
-        processPositions: jest.fn((positions) => {
-          const newPositions = new Map(positions);
-          newPositions.set(1, {
-            quantity: -10,
-            totalCost: -500,
-            instrument,
-          });
-          return newPositions;
-        }),
-      };
-      OrderProcessorFactory.create = jest.fn().mockReturnValue(mockProcessor);
-
-      await expect(service.getPortfolio(1)).rejects.toThrow('inconsistent state');
-    });
-
-    it('should calculate total return correctly', async () => {
-      const instrument = createMockInstrument(1, 'AAPL');
-      const orders = [
-        createMockOrder(1, 1, instrument, OrderSide.BUY, 10, 50),
-      ];
-
-      mockOrderRepository.find = jest.fn().mockResolvedValue(orders);
-
-      const { OrderProcessorFactory } = require('../order-processors/OrderProcessorFactory');
-      const mockProcessor = {
-        processCash: jest.fn((cash) => {
-          // Start with 0, add cash first, then subtract
-          return cash + 1000 - 500; // Ensure positive cash
-        }),
-        processPositions: jest.fn((positions) => {
-          const newPositions = new Map(positions);
-          newPositions.set(1, {
-            quantity: 10,
-            totalCost: 500, // avg cost = 50
-            instrument,
-          });
-          return newPositions;
-        }),
-      };
-      OrderProcessorFactory.create = jest.fn().mockReturnValue(mockProcessor);
-
-      const marketData = new MarketData();
-      marketData.id = 1;
-      marketData.instrumentId = 1;
-      marketData.close = 60; // current price = 60
-      marketData.date = new Date();
-      mockMarketDataRepository.findOne = jest.fn().mockResolvedValue(marketData);
-
-      const result = await service.getPortfolio(1);
-
-      // totalReturn = ((60 - 50) / 50) * 100 = 20%
-      expect(result.positions[0].totalReturn).toBe(20);
-    });
-
+    expect(mockV1GetPortfolio).toHaveBeenCalledWith(1);
+    expect(mockV2GetPortfolio).not.toHaveBeenCalled();
+    expect(result).toEqual(mockPortfolio);
   });
 });

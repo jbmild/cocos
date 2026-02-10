@@ -32,4 +32,13 @@ else
     echo "Warning: database-extended.sql not found at /scripts/database-extended.sql, skipping"
 fi
 
+# Ejecutar database-portfolio-snapshots.sql (tabla de snapshots)
+if [ -f /scripts/database-portfolio-snapshots.sql ]; then
+    echo "Running database-portfolio-snapshots.sql..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "cocos_test" -f /scripts/database-portfolio-snapshots.sql
+    echo "database-portfolio-snapshots.sql executed successfully!"
+else
+    echo "Warning: database-portfolio-snapshots.sql not found at /scripts/database-portfolio-snapshots.sql, skipping"
+fi
+
 echo "Test database initialized successfully!"

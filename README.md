@@ -32,6 +32,9 @@ DB_SSL=false
 # Server Configuration
 PORT=3000
 NODE_ENV=development
+
+# Feature Flags
+ENABLE_PORTFOLIO_SNAPSHOT=false
 ```
 
 ### 2. Base de Datos
@@ -42,6 +45,7 @@ Crea la base de datos y carga el schema si no los tienes aun:
 psql -U postgres -c "CREATE DATABASE cocos;"
 psql -U postgres -d cocos -f database.sql
 psql -U postgres -d cocos -f database-extended.sql
+psql -U postgres -d cocos -f database-portfolio-snapshots.sql
 ```
 
 ### 3. Instalación de Dependencias
@@ -84,6 +88,7 @@ Este proyecto incluye documentación sobre decisiones de diseño y arquitectura:
 
 - [Diseño del Endpoint de Portfolio](./docs/PORTFOLIO_DESIGN.md) - Arquitectura y patrones de diseño utilizados en el endpoint de portfolio
 - [Decisión de Implementación: Endpoint de Cancelación de Órdenes](./docs/CANCEL_ORDER_DECISION.md) - Justificación y diseño del endpoint de cancelación de órdenes
+- [Optimización de Portfolio con Snapshots Diarios](./docs/PORTFOLIO_SNAPSHOT_OPTIMIZATION.md) - Explicación de la optimización con snapshots y su importancia para el rendimiento
 
 ## Mejoras y Oportunidades Futuras
 
@@ -97,6 +102,8 @@ Las siguientes mejoras podrían implementarse para extender la funcionalidad de 
    - Actualizar el modelo de datos para incluir información de moneda
    - Modificar la lógica de cálculo de portfolios para manejar conversiones
    - Agregar soporte para órdenes en diferentes monedas
+
+4. **Proceso separado para cálculo de snapshots**: Crear un proceso separado (cron job o scheduled task) que calcule los snapshots diariamente en segundo plano, en lugar de hacerlo durante las requests. Esto mejoraría significativamente el tiempo de respuesta ya que el snapshot ya estaría calculado cuando se necesite. Es importante considerar que solo se deben generar snapshots para usuarios que tuvieron operaciones, ya que no tiene sentido crear un snapshot nuevo si no hay cambios desde el snapshot anterior.
 
 ## Insomnia Collection
 

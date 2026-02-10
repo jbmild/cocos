@@ -3,17 +3,18 @@ import { Instrument } from '../entities/Instrument';
 import { User } from '../entities/User';
 import { Order } from '../entities/Order';
 import { MarketData } from '../entities/MarketData';
+import { PortfolioSnapshot } from '../entities/PortfolioSnapshot';
 
-// Determinar si estamos en modo test (cuando hay variables DB_TEST_* o NODE_ENV=test)
-// Nota: Las variables de entorno deben estar cargadas antes de importar este módulo
-const isTestMode = !!process.env.DB_TEST_HOST || process.env.NODE_ENV === 'test';
-
-// Leer configuración desde variables de entorno (test o desarrollo)
-const host = isTestMode ? (process.env.DB_TEST_HOST || 'localhost') : (process.env.DB_HOST || 'localhost');
-const port = isTestMode 
+// Configuración de base de datos para la aplicación
+// Usa DB_TEST_* cuando NODE_ENV=test, DB_* en otros casos
+const isTestMode = process.env.NODE_ENV === 'test';
+const host = isTestMode 
+  ? (process.env.DB_TEST_HOST || 'localhost')
+  : (process.env.DB_HOST || 'localhost');
+const port = isTestMode
   ? parseInt(process.env.DB_TEST_PORT || '5433', 10)
   : parseInt(process.env.DB_PORT || '5432', 10);
-const username = isTestMode 
+const username = isTestMode
   ? (process.env.DB_TEST_USERNAME || 'postgres')
   : (process.env.DB_USERNAME || 'postgres');
 const password = isTestMode
@@ -33,7 +34,7 @@ export const AppDataSource = new DataSource({
   username,
   password,
   database,
-  entities: [Instrument, User, Order, MarketData],
+  entities: [Instrument, User, Order, MarketData, PortfolioSnapshot],
   synchronize: false, // No usar en producción, ya tenemos el schema
   logging: process.env.NODE_ENV === 'development',
   ssl: sslEnabled ? {
@@ -44,10 +45,10 @@ export const AppDataSource = new DataSource({
 // Función para verificar que las variables de entorno están cargadas (solo en desarrollo)
 if (process.env.NODE_ENV === 'development') {
   console.log('Database config:', {
-    host: process.env.DB_HOST || 'localhost (default)',
-    port: process.env.DB_PORT || '5432 (default)',
-    database: process.env.DB_NAME || 'cocos (default)',
-    username: process.env.DB_USERNAME || 'postgres (default)',
+    host: host,
+    port: port,
+    database: database,
+    username: username,
     ssl: sslEnabled ? 'enabled' : 'disabled',
   });
 }

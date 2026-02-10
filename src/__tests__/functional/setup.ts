@@ -89,8 +89,8 @@ export async function cleanTestDatabase(): Promise<void> {
 export async function closeTestDatabase(): Promise<void> {
   if (AppDataSource.isInitialized) {
     await AppDataSource.destroy();
-    isDatabaseInitialized = false;
   }
+  isDatabaseInitialized = false;
 }
 
 /**
